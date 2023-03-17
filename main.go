@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/cqroot/git-commit-helper/internal/commit"
 )
 
 func main() {
 	ctype := commit.Type()
-	scope := commit.Scope()
+	scope := strings.Trim(commit.Scope(), " ")
 	if scope != "" {
 		scope = "(" + scope + ")"
 	}
 	summary := commit.Summary()
 	message := fmt.Sprintf("%s%s: %s", ctype, scope, summary)
 
-	body := commit.Body()
+	body := strings.Trim(commit.Body(), " \n")
 	if body != "" {
 		message = message + "\n\n" + body
 	}

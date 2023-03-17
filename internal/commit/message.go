@@ -46,7 +46,7 @@ func Type() string {
 }
 
 func Scope() string {
-	scope, err := p.Ask("Input the scope of change:").Input(
+	scope, err := p.Ask("Input the scope of change: (skip if empty)").Input(
 		"",
 		input.WithHelp(true),
 	)
@@ -64,7 +64,7 @@ func Body() string {
 }
 
 func Summary() string {
-	scope, err := p.Ask("Input the message body of change:").Input(
+	scope, err := p.Ask("Input the message body of change: (skip if empty)").Input(
 		"",
 		input.WithHelp(true),
 	)
