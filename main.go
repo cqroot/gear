@@ -23,6 +23,11 @@ func main() {
 		message = message + "\n\n" + body
 	}
 
+	issues := commit.Issues()
+	if issues != "" {
+		message = message + "\n\n" + "Closes " + issues
+	}
+
 	cmd := exec.Command("git", "commit", "-m", message)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

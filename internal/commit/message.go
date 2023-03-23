@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/cqroot/prompt"
 	"github.com/cqroot/prompt/choose"
@@ -70,4 +72,35 @@ func Summary() string {
 	)
 	CheckErr(err)
 	return scope
+}
+
+func validateIssues(text string) error {
+	if len(text) == 0 {
+		return nil
+	}
+
+	issues := strings.Split(text, ", ")
+	for _, issue := range issues {
+		if len(issue) == 0 {
+			return errors.New("Empty issues are not allowed")
+		}
+		if issue[0] != '#' {
+			return errors.New("Issue must start with #")
+		}
+		if _, err := strconv.Atoi(issue[1:]); err != nil {
+			return errors.New("Issue must be like \"#number\"")
+		}
+	}
+	return nil
+}
+
+func Issues() string {
+	issues, err := p.Ask("Input the issues you want to close: (Such as \"#1, #2\". skip if empty)").Input(
+		"", input.WithHelp(true),
+		input.WithValidateFunc(validateIssues),
+	)
+	if err != nil {
+		return ""
+	}
+	return issues
 }
