@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -103,4 +104,34 @@ func Issues() string {
 		return ""
 	}
 	return issues
+}
+
+func Run() error {
+	ctype := Type()
+	scope := strings.Trim(Scope(), " ")
+	if scope != "" {
+		scope = "(" + scope + ")"
+	}
+	summary := Summary()
+	message := fmt.Sprintf("%s%s: %s", ctype, scope, summary)
+
+	body := strings.Trim(Body(), " \n")
+	if body != "" {
+		message = message + "\n\n" + body
+	}
+
+	issues := Issues()
+	if issues != "" {
+		message = message + "\n\n" + "Closes " + issues
+	}
+
+	cmd := exec.Command("git", "commit", "-m", message)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
