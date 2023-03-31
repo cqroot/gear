@@ -1,6 +1,6 @@
 package main
 
-import "github.com/cqroot/git-commit-helper/cmd"
+import "github.com/cqroot/gear/cmd"
 
 func main() {
 	cmd.Execute()

@@ -1,9 +1,9 @@
-module github.com/cqroot/git-commit-helper
+module github.com/cqroot/gear
 
 go 1.20
 
 require (
-	github.com/cqroot/prompt v0.8.8-0.20230324115447-bb195537694a
+	github.com/cqroot/prompt v0.9.0
 	github.com/spf13/cobra v1.6.1
 )
 

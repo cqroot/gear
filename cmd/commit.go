@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/cqroot/git-commit-helper/internal/commit"
+	"github.com/cqroot/gear/internal/commit"
 	"github.com/spf13/cobra"
 )
 

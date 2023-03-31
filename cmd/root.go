@@ -9,7 +9,7 @@ import (
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "git-helper",
+		Use:   "gear",
 		Short: "",
 		Long:  "",
 	}

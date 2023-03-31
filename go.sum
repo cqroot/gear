@@ -16,10 +16,8 @@ github.com/containerd/console v1.0.3/go.mod h1:7LqA/THxQ86k76b8c/EMSiaJ3h1eZkMkX
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/cqroot/multichoose v0.1.0 h1:525pYO4VrdVH17JJdNAV2bacygF0jJ+BfM0HM6XqjDg=
 github.com/cqroot/multichoose v0.1.0/go.mod h1:BJzIGqbQZNADPDuA3IzhmTMpRc2F3fZKysMRYP+Ydw8=
-github.com/cqroot/prompt v0.8.7 h1:PEdVSTsLCI8dm5K88XIZXkuzJass/wtMfr9PkPO60jI=
-github.com/cqroot/prompt v0.8.7/go.mod h1:YGsQCj5CqO7s17/ZFSJgllppJpTN7sCVix7lfnCkZx8=
-github.com/cqroot/prompt v0.8.8-0.20230324115447-bb195537694a h1:WBGii3/wg+UMW4qrJMFYgvDEz10JUySjrUUY73+3GI0=
-github.com/cqroot/prompt v0.8.8-0.20230324115447-bb195537694a/go.mod h1:YGsQCj5CqO7s17/ZFSJgllppJpTN7sCVix7lfnCkZx8=
+github.com/cqroot/prompt v0.9.0 h1:eOVBFw7cqOu4bEPq714aj8HTMI8RHPcttypz0KB3dHo=
+github.com/cqroot/prompt v0.9.0/go.mod h1:YGsQCj5CqO7s17/ZFSJgllppJpTN7sCVix7lfnCkZx8=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/inconshreveable/mousetrap v1.0.1 h1:U3uMjPSQEBMNp1lFxmllqCPM6P5u/Xq7Pgzkat/bFNc=
 github.com/inconshreveable/mousetrap v1.0.1/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
