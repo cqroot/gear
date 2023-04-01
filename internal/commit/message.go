@@ -96,22 +96,35 @@ func Issues() string {
 }
 
 func Run() error {
+	// Header
 	ctype := Type()
-	scope := strings.Trim(Scope(), " ")
-	if scope != "" {
-		scope = "(" + scope + ")"
+
+	scope := ""
+	if !config.CommitDisableScope() {
+		scope = strings.Trim(Scope(), " ")
+
+		if scope != "" {
+			scope = "(" + scope + ")"
+		}
 	}
+
 	summary := Summary()
 	message := fmt.Sprintf("%s%s: %s", ctype, scope, summary)
 
-	body := strings.Trim(Body(), " \n")
-	if body != "" {
-		message = message + "\n\n" + body
+	// Body
+	if !config.CommitDisableBody() {
+		body := strings.Trim(Body(), " \n")
+		if body != "" {
+			message = message + "\n\n" + body
+		}
 	}
 
-	issues := Issues()
-	if issues != "" {
-		message = message + "\n\n" + "Closes " + issues
+	// Footer
+	if !config.CommitDisableFooter() {
+		issues := Issues()
+		if issues != "" {
+			message = message + "\n\n" + "Closes " + issues
+		}
 	}
 
 	cmd := exec.Command("git", "commit", "-m", message)

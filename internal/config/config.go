@@ -8,7 +8,10 @@ import (
 )
 
 type CommitConfig struct {
-	Types []choose.Choice `yaml:"types"`
+	Types         []choose.Choice `yaml:"types"`
+	DisableScope  bool            `yaml:"disable-scope"`
+	DisableBody   bool            `yaml:"disable-body"`
+	DisableFooter bool            `yaml:"disable-footer"`
 }
 
 type Config struct {
@@ -55,4 +58,16 @@ func ReadConfig(name string) error {
 
 func CommitTypes() []choose.Choice {
 	return conf.Commit.Types
+}
+
+func CommitDisableScope() bool {
+	return conf.Commit.DisableScope
+}
+
+func CommitDisableBody() bool {
+	return conf.Commit.DisableBody
+}
+
+func CommitDisableFooter() bool {
+	return conf.Commit.DisableFooter
 }

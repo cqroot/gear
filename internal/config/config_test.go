@@ -34,3 +34,15 @@ func TestCommitTypes(t *testing.T) {
 		{Text: "⚡️", Note: "perf: A code change that improves performance"},
 	}, config.CommitTypes())
 }
+
+func TestCommitDisableScope(t *testing.T) {
+	require.Equal(t, true, config.CommitDisableScope())
+}
+
+func TestCommitDisableBody(t *testing.T) {
+	require.Equal(t, true, config.CommitDisableBody())
+}
+
+func TestCommitDisableFooter(t *testing.T) {
+	require.Equal(t, true, config.CommitDisableFooter())
+}

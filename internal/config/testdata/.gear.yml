@@ -1,4 +1,7 @@
 commit:
+  disable-scope: true
+  disable-body: true
+  disable-footer: true
   types:
     - text: ✨
       note: "feat: A new feature"
