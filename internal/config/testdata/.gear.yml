@@ -1,0 +1,18 @@
+commit:
+  types:
+    - text: ✨
+      note: "feat: A new feature"
+    - text: 🐛
+      note: "fix: A bug fix"
+    - text: 🔧
+      note: "build: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)"
+    - text: 📝
+      note: "docs: Documentation only changes"
+    - text: 🎨
+      note: "refactor: A code change that neither fixes a bug nor adds a feature"
+    - text: 🧪
+      note: "test: Adding missing tests or correcting existing tests"
+    - text: 👷
+      note: "ci: Changes to our CI configuration files and scripts (examples: CircleCi, SauceLabs)"
+    - text: ⚡️
+      note: "perf: A code change that improves performance"
