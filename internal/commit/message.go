@@ -109,7 +109,12 @@ func Run() error {
 	}
 
 	summary := Summary()
-	message := fmt.Sprintf("%s%s: %s", ctype, scope, summary)
+
+	sep := ":"
+	if config.CommitRemoveColon() {
+		sep = ""
+	}
+	message := fmt.Sprintf("%s%s%s %s", ctype, scope, sep, summary)
 
 	// Body
 	if !config.CommitDisableBody() {

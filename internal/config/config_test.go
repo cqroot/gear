@@ -46,3 +46,7 @@ func TestCommitDisableBody(t *testing.T) {
 func TestCommitDisableFooter(t *testing.T) {
 	require.Equal(t, true, config.CommitDisableFooter())
 }
+
+func TestCommitRemoveColon(t *testing.T) {
+	require.Equal(t, true, config.CommitRemoveColon())
+}

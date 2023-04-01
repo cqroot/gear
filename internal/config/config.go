@@ -12,6 +12,7 @@ type CommitConfig struct {
 	DisableScope  bool            `yaml:"disable-scope"`
 	DisableBody   bool            `yaml:"disable-body"`
 	DisableFooter bool            `yaml:"disable-footer"`
+	RemoveColon   bool            `yaml:"remove-colon"`
 }
 
 type Config struct {
@@ -70,4 +71,8 @@ func CommitDisableBody() bool {
 
 func CommitDisableFooter() bool {
 	return conf.Commit.DisableFooter
+}
+
+func CommitRemoveColon() bool {
+	return conf.Commit.RemoveColon
 }
