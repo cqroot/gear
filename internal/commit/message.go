@@ -31,6 +31,7 @@ func CheckErr(err error) {
 func Type() string {
 	ctype, err := p.Ask("Select the type of change:").AdvancedChoose(
 		config.CommitTypes(),
+		choose.WithTheme(choose.ThemeArrow),
 		choose.WithHelp(true),
 	)
 	CheckErr(err)
