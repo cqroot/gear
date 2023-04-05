@@ -8,8 +8,8 @@ import (
 func newCommitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "commit",
-		Short: "",
-		Long:  "",
+		Short: "Write conventional git commit messages.",
+		Long:  "Write conventional git commit messages.",
 		Run: func(cmd *cobra.Command, args []string) {
 			cobra.CheckErr(commit.Run())
 		},

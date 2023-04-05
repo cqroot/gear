@@ -4,17 +4,21 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cqroot/gear/internal/commit"
 	"github.com/spf13/cobra"
 )
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "gear",
-		Short: "",
-		Long:  "",
+		Short: "Write conventional git commit messages.",
+		Long:  "Write conventional git commit messages.",
+		Run: func(cmd *cobra.Command, args []string) {
+			cobra.CheckErr(commit.Run())
+		},
 	}
 
-	rootCmd.AddCommand(newCommitCmd())
+	// rootCmd.AddCommand(newCommitCmd())
 
 	return rootCmd
 }
