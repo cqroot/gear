@@ -1,12 +1,14 @@
 package commit
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/cqroot/gear/internal/config"
 	"github.com/cqroot/prompt"
@@ -28,6 +30,14 @@ func CheckErr(err error) {
 	}
 }
 
+type Message struct {
+	Type    string
+	Scope   string
+	Summary string
+	Body    string
+	Footer  string
+}
+
 func Type() string {
 	ctype, err := p.Ask("Select the type of change:").AdvancedChoose(
 		config.CommitTypes(),
@@ -39,30 +49,42 @@ func Type() string {
 }
 
 func Scope() string {
+	if config.CommitDisableScope() {
+		return ""
+	}
+
 	scope, err := p.Ask("Input the scope of change: (skip if empty)").Input(
 		"",
 		input.WithHelp(true),
 	)
 	CheckErr(err)
-	return scope
-}
 
-func Body() string {
-	scope, err := p.Ask("Input the summary of change:").Write(
-		"",
-		write.WithHelp(true),
-	)
-	CheckErr(err)
+	scope = strings.Trim(scope, " ")
 	return scope
 }
 
 func Summary() string {
-	scope, err := p.Ask("Input the message body of change: (skip if empty)").Input(
+	summary, err := p.Ask("Input the summary of change:").Input(
 		"",
 		input.WithHelp(true),
 	)
 	CheckErr(err)
-	return scope
+	return summary
+}
+
+func Body() string {
+	if config.CommitDisableBody() {
+		return ""
+	}
+
+	body, err := p.Ask("Input the message body of change: (skip if empty)").Write(
+		"",
+		write.WithHelp(true),
+	)
+	CheckErr(err)
+
+	body = strings.Trim(body, " \n")
+	return body
 }
 
 func validateIssues(text string) error {
@@ -86,6 +108,10 @@ func validateIssues(text string) error {
 }
 
 func Issues() string {
+	if config.CommitDisableFooter() {
+		return ""
+	}
+
 	issues, err := p.Ask("Input the issues you want to close: (Such as \"#1, #2\". skip if empty)").Input(
 		"", input.WithHelp(true),
 		input.WithValidateFunc(validateIssues),
@@ -97,46 +123,35 @@ func Issues() string {
 }
 
 func Run() error {
-	// Header
-	ctype := Type()
-
-	scope := ""
-	if !config.CommitDisableScope() {
-		scope = strings.Trim(Scope(), " ")
-
-		if scope != "" {
-			scope = "(" + scope + ")"
-		}
-	}
-
-	summary := Summary()
-
-	sep := ":"
-	if config.CommitRemoveColon() {
-		sep = ""
-	}
-	message := fmt.Sprintf("%s%s%s %s", ctype, scope, sep, summary)
-
-	// Body
-	if !config.CommitDisableBody() {
-		body := strings.Trim(Body(), " \n")
-		if body != "" {
-			message = message + "\n\n" + body
-		}
-	}
-
 	// Footer
-	if !config.CommitDisableFooter() {
-		issues := Issues()
-		if issues != "" {
-			message = message + "\n\n" + "Closes " + issues
-		}
+	footer := Issues()
+	if footer != "" {
+		footer = "Closes " + footer
 	}
 
-	cmd := exec.Command("git", "commit", "-m", message)
+	msg := Message{
+		Type:    Type(),
+		Scope:   Scope(),
+		Summary: Summary(),
+		Body:    Body(),
+		Footer:  footer,
+	}
+
+	tmpl, err := template.New("message").
+		Parse(config.CommitMessageTemplate())
+	if err != nil {
+		return err
+	}
+	buf := bytes.Buffer{}
+	err = tmpl.Execute(&buf, msg)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git", "commit", "-m", buf.String())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}

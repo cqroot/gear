@@ -2,7 +2,6 @@ commit:
   disable-scope: true
   disable-body: true
   disable-footer: true
-  remove-colon: true
   types:
     - text: ✨
       note: "feat: A new feature"
@@ -20,3 +19,4 @@ commit:
       note: "ci: Changes to our CI configuration files and scripts"
     - text: ⚡️
       note: "perf: A code change that improves performance"
+  message-template: "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}"

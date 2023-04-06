@@ -8,11 +8,11 @@ import (
 )
 
 type CommitConfig struct {
-	Types         []choose.Choice `yaml:"types"`
-	DisableScope  bool            `yaml:"disable-scope"`
-	DisableBody   bool            `yaml:"disable-body"`
-	DisableFooter bool            `yaml:"disable-footer"`
-	RemoveColon   bool            `yaml:"remove-colon"`
+	Types           []choose.Choice `yaml:"types"`
+	DisableScope    bool            `yaml:"disable-scope"`
+	DisableBody     bool            `yaml:"disable-body"`
+	DisableFooter   bool            `yaml:"disable-footer"`
+	MessageTemplate string          `yaml:"message-template"`
 }
 
 type Config struct {
@@ -27,10 +27,15 @@ var conf = Config{
 			{Text: "docs", Note: "Documentation only changes"},
 			{Text: "refactor", Note: "A code change that neither fixes a bug nor adds a feature"},
 			{Text: "test", Note: "Adding missing tests or correcting existing tests"},
-			{Text: "build", Note: "Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)"},
-			{Text: "ci", Note: "Changes to our CI configuration files and scripts (examples: CircleCi, SauceLabs)"},
+			{Text: "build", Note: "Changes that affect the build system or external dependencies"},
+			{Text: "ci", Note: "Changes to our CI configuration files and scripts"},
 			{Text: "perf", Note: "A code change that improves performance"},
 		},
+		MessageTemplate: `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
+
+{{.Body}}{{end}}{{if .Footer}}
+
+{{.Footer}}{{end}}`,
 	},
 }
 
@@ -73,6 +78,6 @@ func CommitDisableFooter() bool {
 	return conf.Commit.DisableFooter
 }
 
-func CommitRemoveColon() bool {
-	return conf.Commit.RemoveColon
+func CommitMessageTemplate() string {
+	return conf.Commit.MessageTemplate
 }
