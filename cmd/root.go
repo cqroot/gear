@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cqroot/gear/internal/commit"
+	"github.com/cqroot/gear/internal/committer"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ func newRootCmd() *cobra.Command {
 		Short: "Write conventional git commit messages.",
 		Long:  "Write conventional git commit messages.",
 		Run: func(cmd *cobra.Command, args []string) {
-			cobra.CheckErr(commit.Run())
+			cobra.CheckErr(committer.New().Run())
 		},
 	}
 

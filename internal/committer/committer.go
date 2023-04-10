@@ -1,4 +1,4 @@
-package commit
+package committer
 
 import (
 	"bytes"
@@ -17,9 +17,12 @@ import (
 	"github.com/cqroot/prompt/write"
 )
 
-var p = prompt.New()
+type Committer struct {
+	p   prompt.Prompt
+	typ string
+}
 
-func CheckErr(err error) {
+func checkErr(err error) {
 	if err != nil {
 		if errors.Is(err, prompt.ErrUserQuit) {
 			os.Exit(0)
@@ -30,58 +33,55 @@ func CheckErr(err error) {
 	}
 }
 
-type Message struct {
-	Type    string
-	Scope   string
-	Summary string
-	Body    string
-	Footer  string
-}
+func New() *Committer {
+	c := Committer{
+		p: *prompt.New(),
+	}
 
-func Type() string {
-	ctype, err := p.Ask("Select the type of change:").AdvancedChoose(
+	typ, err := c.p.Ask("Select the type of change:").AdvancedChoose(
 		config.CommitTypes(),
 		choose.WithTheme(choose.ThemeArrow),
-		choose.WithHelp(true),
 	)
-	CheckErr(err)
-	return ctype
+	checkErr(err)
+
+	c.typ = typ
+	return &c
 }
 
-func Scope() string {
+func (c Committer) scope() string {
 	if config.CommitDisableScope() {
 		return ""
 	}
 
-	scope, err := p.Ask("Input the scope of change: (skip if empty)").Input(
+	scope, err := c.p.Ask("Input the scope of change: (skip if empty)").Input(
 		"",
 		input.WithHelp(true),
 	)
-	CheckErr(err)
+	checkErr(err)
 
 	scope = strings.Trim(scope, " ")
 	return scope
 }
 
-func Summary() string {
-	summary, err := p.Ask("Input the summary of change:").Input(
+func (c Committer) summary() string {
+	summary, err := c.p.Ask("Input the summary of change:").Input(
 		"",
 		input.WithHelp(true),
 	)
-	CheckErr(err)
+	checkErr(err)
 	return summary
 }
 
-func Body() string {
+func (c Committer) body() string {
 	if config.CommitDisableBody() {
 		return ""
 	}
 
-	body, err := p.Ask("Input the message body of change: (skip if empty)").Write(
+	body, err := c.p.Ask("Input the message body of change: (skip if empty)").Write(
 		"",
 		write.WithHelp(true),
 	)
-	CheckErr(err)
+	checkErr(err)
 
 	body = strings.Trim(body, " \n")
 	return body
@@ -107,12 +107,12 @@ func validateIssues(text string) error {
 	return nil
 }
 
-func Issues() string {
+func (c Committer) issues() string {
 	if config.CommitDisableFooter() {
 		return ""
 	}
 
-	issues, err := p.Ask("Input the issues you want to close: (Such as \"#1, #2\". skip if empty)").Input(
+	issues, err := c.p.Ask("Input the issues you want to close: (Such as \"#1, #2\". skip if empty)").Input(
 		"", input.WithHelp(true),
 		input.WithValidateFunc(validateIssues),
 	)
@@ -122,19 +122,29 @@ func Issues() string {
 	return issues
 }
 
-func Run() error {
-	// Footer
-	footer := Issues()
+func (c Committer) footer() string {
+	footer := c.issues()
 	if footer != "" {
 		footer = "Closes " + footer
 	}
+	return footer
+}
 
+type Message struct {
+	Type    string
+	Scope   string
+	Summary string
+	Body    string
+	Footer  string
+}
+
+func (c Committer) Run() error {
 	msg := Message{
-		Type:    Type(),
-		Scope:   Scope(),
-		Summary: Summary(),
-		Body:    Body(),
-		Footer:  footer,
+		Type:    c.typ,
+		Scope:   c.scope(),
+		Summary: c.summary(),
+		Body:    c.body(),
+		Footer:  c.footer(),
 	}
 
 	tmpl, err := template.New("message").
