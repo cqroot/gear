@@ -29,9 +29,33 @@ func TestDefault(t *testing.T) {
 {{.Footer}}{{end}}`, config.CommitMessageTemplate())
 }
 
-func TestConfig(t *testing.T) {
-	err := config.ReadConfig("./testdata/.gear.yml")
+func TestConfig_1(t *testing.T) {
+	err := config.ReadConfig("./testdata/gear_1.yml")
 	require.Nil(t, err)
+
+	config.InitCommitConfig("✨")
+
+	require.Equal(t, []choose.Choice{
+		{Text: "✨", Note: "feat: A new feature"},
+		{Text: "🐛", Note: "fix: A bug fix"},
+		{Text: "🔧", Note: "build: Changes that affect the build system or external dependencies"},
+		{Text: "📝", Note: "docs: Documentation only changes"},
+		{Text: "🎨", Note: "refactor: A code change that neither fixes a bug nor adds a feature"},
+		{Text: "🧪", Note: "test: Adding missing tests or correcting existing tests"},
+		{Text: "👷", Note: "ci: Changes to our CI configuration files and scripts"},
+		{Text: "⚡️", Note: "perf: A code change that improves performance"},
+	}, config.CommitTypes())
+	require.Equal(t, true, config.CommitEnableScope())
+	require.Equal(t, true, config.CommitEnableBody())
+	require.Equal(t, true, config.CommitEnableFooter())
+	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", config.CommitMessageTemplate())
+}
+
+func TestConfig_2(t *testing.T) {
+	err := config.ReadConfig("./testdata/gear_2.yml")
+	require.Nil(t, err)
+
+	config.InitCommitConfig("✨")
 
 	require.Equal(t, []choose.Choice{
 		{Text: "✨", Note: "feat: A new feature"},

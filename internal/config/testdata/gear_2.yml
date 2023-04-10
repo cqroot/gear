@@ -1,0 +1,22 @@
+commit:
+  types:
+    - text: ✨
+      note: "feat: A new feature"
+      enable-scope: true
+      enable-body: true
+      enable-footer: true
+      message-template: "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}"
+    - text: 🐛
+      note: "fix: A bug fix"
+    - text: 🔧
+      note: "build: Changes that affect the build system or external dependencies"
+    - text: 📝
+      note: "docs: Documentation only changes"
+    - text: 🎨
+      note: "refactor: A code change that neither fixes a bug nor adds a feature"
+    - text: 🧪
+      note: "test: Adding missing tests or correcting existing tests"
+    - text: 👷
+      note: "ci: Changes to our CI configuration files and scripts"
+    - text: ⚡️
+      note: "perf: A code change that improves performance"
