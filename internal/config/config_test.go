@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCommitTypes(t *testing.T) {
+func TestDefault(t *testing.T) {
 	require.Equal(t, []choose.Choice{
 		{Text: "feat", Note: "A new feature"},
 		{Text: "fix", Note: "A bug fix"},
@@ -19,7 +19,17 @@ func TestCommitTypes(t *testing.T) {
 		{Text: "ci", Note: "Changes to our CI configuration files and scripts"},
 		{Text: "perf", Note: "A code change that improves performance"},
 	}, config.CommitTypes())
+	require.Equal(t, false, config.CommitEnableScope())
+	require.Equal(t, false, config.CommitEnableBody())
+	require.Equal(t, false, config.CommitEnableFooter())
+	require.Equal(t, `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
 
+{{.Body}}{{end}}{{if .Footer}}
+
+{{.Footer}}{{end}}`, config.CommitMessageTemplate())
+}
+
+func TestConfig(t *testing.T) {
 	err := config.ReadConfig("./testdata/.gear.yml")
 	require.Nil(t, err)
 
@@ -33,20 +43,8 @@ func TestCommitTypes(t *testing.T) {
 		{Text: "👷", Note: "ci: Changes to our CI configuration files and scripts"},
 		{Text: "⚡️", Note: "perf: A code change that improves performance"},
 	}, config.CommitTypes())
-}
-
-func TestCommitDisableScope(t *testing.T) {
-	require.Equal(t, true, config.CommitDisableScope())
-}
-
-func TestCommitDisableBody(t *testing.T) {
-	require.Equal(t, true, config.CommitDisableBody())
-}
-
-func TestCommitDisableFooter(t *testing.T) {
-	require.Equal(t, true, config.CommitDisableFooter())
-}
-
-func TestCommitTemplate(t *testing.T) {
+	require.Equal(t, true, config.CommitEnableScope())
+	require.Equal(t, true, config.CommitEnableBody())
+	require.Equal(t, true, config.CommitEnableFooter())
 	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", config.CommitMessageTemplate())
 }

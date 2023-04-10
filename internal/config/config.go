@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 
 	"github.com/cqroot/prompt/choose"
 	"gopkg.in/yaml.v3"
@@ -9,9 +10,9 @@ import (
 
 type CommitConfig struct {
 	Types           []choose.Choice `yaml:"types"`
-	DisableScope    bool            `yaml:"disable-scope"`
-	DisableBody     bool            `yaml:"disable-body"`
-	DisableFooter   bool            `yaml:"disable-footer"`
+	EnableScope     string          `yaml:"enable-scope"`
+	EnableBody      string          `yaml:"enable-body"`
+	EnableFooter    string          `yaml:"enable-footer"`
 	MessageTemplate string          `yaml:"message-template"`
 }
 
@@ -21,6 +22,14 @@ type Config struct {
 
 var conf = Config{
 	Commit: CommitConfig{
+		EnableScope:  "false",
+		EnableBody:   "false",
+		EnableFooter: "false",
+		MessageTemplate: `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
+
+{{.Body}}{{end}}{{if .Footer}}
+
+{{.Footer}}{{end}}`,
 		Types: []choose.Choice{
 			{Text: "feat", Note: "A new feature"},
 			{Text: "fix", Note: "A bug fix"},
@@ -31,11 +40,6 @@ var conf = Config{
 			{Text: "ci", Note: "Changes to our CI configuration files and scripts"},
 			{Text: "perf", Note: "A code change that improves performance"},
 		},
-		MessageTemplate: `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
-
-{{.Body}}{{end}}{{if .Footer}}
-
-{{.Footer}}{{end}}`,
 	},
 }
 
@@ -66,16 +70,20 @@ func CommitTypes() []choose.Choice {
 	return conf.Commit.Types
 }
 
-func CommitDisableScope() bool {
-	return conf.Commit.DisableScope
+func toBool(val string) bool {
+	return strings.ToLower(val) == "true"
 }
 
-func CommitDisableBody() bool {
-	return conf.Commit.DisableBody
+func CommitEnableScope() bool {
+	return toBool(conf.Commit.EnableScope)
 }
 
-func CommitDisableFooter() bool {
-	return conf.Commit.DisableFooter
+func CommitEnableBody() bool {
+	return toBool(conf.Commit.EnableBody)
+}
+
+func CommitEnableFooter() bool {
+	return toBool(conf.Commit.EnableFooter)
 }
 
 func CommitMessageTemplate() string {

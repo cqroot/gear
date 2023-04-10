@@ -49,7 +49,7 @@ func New() *Committer {
 }
 
 func (c Committer) scope() string {
-	if config.CommitDisableScope() {
+	if !config.CommitEnableScope() {
 		return ""
 	}
 
@@ -73,7 +73,7 @@ func (c Committer) summary() string {
 }
 
 func (c Committer) body() string {
-	if config.CommitDisableBody() {
+	if !config.CommitEnableBody() {
 		return ""
 	}
 
@@ -108,10 +108,6 @@ func validateIssues(text string) error {
 }
 
 func (c Committer) issues() string {
-	if config.CommitDisableFooter() {
-		return ""
-	}
-
 	issues, err := c.p.Ask("Input the issues you want to close: (Such as \"#1, #2\". skip if empty)").Input(
 		"", input.WithHelp(true),
 		input.WithValidateFunc(validateIssues),
@@ -123,6 +119,10 @@ func (c Committer) issues() string {
 }
 
 func (c Committer) footer() string {
+	if !config.CommitEnableFooter() {
+		return ""
+	}
+
 	footer := c.issues()
 	if footer != "" {
 		footer = "Closes " + footer
