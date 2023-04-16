@@ -43,9 +43,14 @@ func TestCommitEnableScope(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, false, defConf.CommitEnableScope())
 
-	conf, err := config.New("./testdata/gear_1.yml")
+	conf1, err := config.New("./testdata/gear_1.yml")
 	require.Nil(t, err)
-	require.Equal(t, true, conf.CommitEnableScope())
+	require.Equal(t, true, conf1.CommitEnableScope())
+
+	conf2, err := config.New("./testdata/gear_2.yml")
+	require.Nil(t, err)
+	conf2.SetCommitType("✨")
+	require.Equal(t, true, conf2.CommitEnableScope())
 }
 
 func TestCommitEnableBody(t *testing.T) {
@@ -53,9 +58,14 @@ func TestCommitEnableBody(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, false, defConf.CommitEnableBody())
 
-	conf, err := config.New("./testdata/gear_1.yml")
+	conf1, err := config.New("./testdata/gear_1.yml")
 	require.Nil(t, err)
-	require.Equal(t, true, conf.CommitEnableBody())
+	require.Equal(t, true, conf1.CommitEnableBody())
+
+	conf2, err := config.New("./testdata/gear_2.yml")
+	require.Nil(t, err)
+	conf2.SetCommitType("✨")
+	require.Equal(t, true, conf2.CommitEnableBody())
 }
 
 func TestCommitEnableFooter(t *testing.T) {
@@ -63,9 +73,14 @@ func TestCommitEnableFooter(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, false, defConf.CommitEnableFooter())
 
-	conf, err := config.New("./testdata/gear_1.yml")
+	conf1, err := config.New("./testdata/gear_1.yml")
 	require.Nil(t, err)
-	require.Equal(t, true, conf.CommitEnableFooter())
+	require.Equal(t, true, conf1.CommitEnableFooter())
+
+	conf2, err := config.New("./testdata/gear_2.yml")
+	require.Nil(t, err)
+	conf2.SetCommitType("✨")
+	require.Equal(t, true, conf2.CommitEnableFooter())
 }
 
 func TestCommitMessageTemplate(t *testing.T) {
@@ -77,7 +92,12 @@ func TestCommitMessageTemplate(t *testing.T) {
 
 {{.Footer}}{{end}}`, defConf.CommitMessageTemplate())
 
-	conf, err := config.New("./testdata/gear_1.yml")
+	conf1, err := config.New("./testdata/gear_1.yml")
 	require.Nil(t, err)
-	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", conf.CommitMessageTemplate())
+	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", conf1.CommitMessageTemplate())
+
+	conf2, err := config.New("./testdata/gear_2.yml")
+	require.Nil(t, err)
+	conf2.SetCommitType("✨")
+	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", conf2.CommitMessageTemplate())
 }
