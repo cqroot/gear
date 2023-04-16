@@ -18,8 +18,9 @@ import (
 )
 
 type Committer struct {
-	p   prompt.Prompt
-	typ string
+	p    prompt.Prompt
+	typ  string
+	conf config.Config
 }
 
 func checkErr(err error) {
@@ -33,23 +34,29 @@ func checkErr(err error) {
 	}
 }
 
-func New() *Committer {
+func New() (*Committer, error) {
+	conf, err := config.New("./.gear.yml")
+	if err != nil {
+		return nil, err
+	}
+
 	c := Committer{
-		p: *prompt.New(),
+		p:    *prompt.New(),
+		conf: *conf,
 	}
 
 	typ, err := c.p.Ask("Select the type of change:").AdvancedChoose(
-		config.CommitTypes(),
+		c.conf.CommitTypes(),
 		choose.WithTheme(choose.ThemeArrow),
 	)
-	checkErr(err)
 
 	c.typ = typ
-	return &c
+	c.conf.SetCommitType(typ)
+	return &c, err
 }
 
 func (c Committer) scope() string {
-	if !config.CommitEnableScope() {
+	if !c.conf.CommitEnableScope() {
 		return ""
 	}
 
@@ -73,7 +80,7 @@ func (c Committer) summary() string {
 }
 
 func (c Committer) body() string {
-	if !config.CommitEnableBody() {
+	if !c.conf.CommitEnableBody() {
 		return ""
 	}
 
@@ -119,7 +126,7 @@ func (c Committer) issues() string {
 }
 
 func (c Committer) footer() string {
-	if !config.CommitEnableFooter() {
+	if !c.conf.CommitEnableFooter() {
 		return ""
 	}
 
@@ -148,7 +155,7 @@ func (c Committer) Run() error {
 	}
 
 	tmpl, err := template.New("message").
-		Parse(config.CommitMessageTemplate())
+		Parse(c.conf.CommitMessageTemplate())
 	if err != nil {
 		return err
 	}

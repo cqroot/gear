@@ -8,7 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDefault(t *testing.T) {
+func TestCommitTypes(t *testing.T) {
+	defConf, err := config.New("")
+	require.Nil(t, err)
+
 	require.Equal(t, []choose.Choice{
 		{Text: "feat", Note: "A new feature"},
 		{Text: "fix", Note: "A bug fix"},
@@ -18,57 +21,63 @@ func TestDefault(t *testing.T) {
 		{Text: "build", Note: "Changes that affect the build system or external dependencies"},
 		{Text: "ci", Note: "Changes to our CI configuration files and scripts"},
 		{Text: "perf", Note: "A code change that improves performance"},
-	}, config.CommitTypes())
-	require.Equal(t, false, config.CommitEnableScope())
-	require.Equal(t, false, config.CommitEnableBody())
-	require.Equal(t, false, config.CommitEnableFooter())
+	}, defConf.CommitTypes())
+
+	conf, err := config.New("./testdata/gear_1.yml")
+	require.Nil(t, err)
+
+	require.Equal(t, []choose.Choice{
+		{Text: "✨", Note: "feat: A new feature"},
+		{Text: "🐛", Note: "fix: A bug fix"},
+		{Text: "🔧", Note: "build: Changes that affect the build system or external dependencies"},
+		{Text: "📝", Note: "docs: Documentation only changes"},
+		{Text: "🎨", Note: "refactor: A code change that neither fixes a bug nor adds a feature"},
+		{Text: "🧪", Note: "test: Adding missing tests or correcting existing tests"},
+		{Text: "👷", Note: "ci: Changes to our CI configuration files and scripts"},
+		{Text: "⚡️", Note: "perf: A code change that improves performance"},
+	}, conf.CommitTypes())
+}
+
+func TestCommitEnableScope(t *testing.T) {
+	defConf, err := config.New("")
+	require.Nil(t, err)
+	require.Equal(t, false, defConf.CommitEnableScope())
+
+	conf, err := config.New("./testdata/gear_1.yml")
+	require.Nil(t, err)
+	require.Equal(t, true, conf.CommitEnableScope())
+}
+
+func TestCommitEnableBody(t *testing.T) {
+	defConf, err := config.New("")
+	require.Nil(t, err)
+	require.Equal(t, false, defConf.CommitEnableBody())
+
+	conf, err := config.New("./testdata/gear_1.yml")
+	require.Nil(t, err)
+	require.Equal(t, true, conf.CommitEnableBody())
+}
+
+func TestCommitEnableFooter(t *testing.T) {
+	defConf, err := config.New("")
+	require.Nil(t, err)
+	require.Equal(t, false, defConf.CommitEnableFooter())
+
+	conf, err := config.New("./testdata/gear_1.yml")
+	require.Nil(t, err)
+	require.Equal(t, true, conf.CommitEnableFooter())
+}
+
+func TestCommitMessageTemplate(t *testing.T) {
+	defConf, err := config.New("")
+	require.Nil(t, err)
 	require.Equal(t, `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
 
 {{.Body}}{{end}}{{if .Footer}}
 
-{{.Footer}}{{end}}`, config.CommitMessageTemplate())
-}
+{{.Footer}}{{end}}`, defConf.CommitMessageTemplate())
 
-func TestConfig_1(t *testing.T) {
-	err := config.ReadConfig("./testdata/gear_1.yml")
+	conf, err := config.New("./testdata/gear_1.yml")
 	require.Nil(t, err)
-
-	config.InitCommitConfig("✨")
-
-	require.Equal(t, []choose.Choice{
-		{Text: "✨", Note: "feat: A new feature"},
-		{Text: "🐛", Note: "fix: A bug fix"},
-		{Text: "🔧", Note: "build: Changes that affect the build system or external dependencies"},
-		{Text: "📝", Note: "docs: Documentation only changes"},
-		{Text: "🎨", Note: "refactor: A code change that neither fixes a bug nor adds a feature"},
-		{Text: "🧪", Note: "test: Adding missing tests or correcting existing tests"},
-		{Text: "👷", Note: "ci: Changes to our CI configuration files and scripts"},
-		{Text: "⚡️", Note: "perf: A code change that improves performance"},
-	}, config.CommitTypes())
-	require.Equal(t, true, config.CommitEnableScope())
-	require.Equal(t, true, config.CommitEnableBody())
-	require.Equal(t, true, config.CommitEnableFooter())
-	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", config.CommitMessageTemplate())
-}
-
-func TestConfig_2(t *testing.T) {
-	err := config.ReadConfig("./testdata/gear_2.yml")
-	require.Nil(t, err)
-
-	config.InitCommitConfig("✨")
-
-	require.Equal(t, []choose.Choice{
-		{Text: "✨", Note: "feat: A new feature"},
-		{Text: "🐛", Note: "fix: A bug fix"},
-		{Text: "🔧", Note: "build: Changes that affect the build system or external dependencies"},
-		{Text: "📝", Note: "docs: Documentation only changes"},
-		{Text: "🎨", Note: "refactor: A code change that neither fixes a bug nor adds a feature"},
-		{Text: "🧪", Note: "test: Adding missing tests or correcting existing tests"},
-		{Text: "👷", Note: "ci: Changes to our CI configuration files and scripts"},
-		{Text: "⚡️", Note: "perf: A code change that improves performance"},
-	}, config.CommitTypes())
-	require.Equal(t, true, config.CommitEnableScope())
-	require.Equal(t, true, config.CommitEnableBody())
-	require.Equal(t, true, config.CommitEnableFooter())
-	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", config.CommitMessageTemplate())
+	require.Equal(t, "{{.Type}} {{if .Scope}}({{.Scope}}): {{end}}{{.Summary}}", conf.CommitMessageTemplate())
 }

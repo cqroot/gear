@@ -14,11 +14,12 @@ func newRootCmd() *cobra.Command {
 		Short: "Write conventional git commit messages.",
 		Long:  "Write conventional git commit messages.",
 		Run: func(cmd *cobra.Command, args []string) {
-			cobra.CheckErr(committer.New().Run())
+			c, err := committer.New()
+			cobra.CheckErr(err)
+
+			cobra.CheckErr(c.Run())
 		},
 	}
-
-	// rootCmd.AddCommand(newCommitCmd())
 
 	return rootCmd
 }
