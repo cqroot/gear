@@ -38,6 +38,25 @@ func TestCommitTypes(t *testing.T) {
 	}, conf.CommitTypes())
 }
 
+func TestScopes(t *testing.T) {
+	defConf, err := config.New("")
+	require.Nil(t, err)
+	require.Equal(t, []string(nil), defConf.CommitScopes())
+
+	conf1, err := config.New("./testdata/gear_1.yml")
+	require.Nil(t, err)
+	require.Equal(t, []string{
+		"something", "others",
+	}, conf1.CommitScopes())
+
+	conf2, err := config.New("./testdata/gear_2.yml")
+	require.Nil(t, err)
+	conf2.SetCommitType("✨")
+	require.Equal(t, []string{
+		"something", "others",
+	}, conf2.CommitScopes())
+}
+
 func TestCommitEnableScope(t *testing.T) {
 	defConf, err := config.New("")
 	require.Nil(t, err)

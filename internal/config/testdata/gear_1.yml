@@ -1,4 +1,7 @@
 commit:
+  scopes:
+    - something
+    - others
   enable-scope: true
   enable-body: true
   enable-footer: true

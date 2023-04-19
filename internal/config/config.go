@@ -10,64 +10,46 @@ import (
 
 type Config struct {
 	content struct {
-		Commit struct {
-			Types           []CommitType `yaml:"types"`
-			EnableScope     string       `yaml:"enable-scope"`
-			EnableBody      string       `yaml:"enable-body"`
-			EnableFooter    string       `yaml:"enable-footer"`
-			MessageTemplate string       `yaml:"message-template"`
-		} `yaml:"commit"`
+		Commit CommitContent `yaml:"commit"`
 	}
 	commitType   string
 	commitTypes  []choose.Choice
-	commitConfig map[string]struct {
-		EnableScope     bool
-		EnableBody      bool
-		EnableFooter    bool
-		MessageTemplate string
-	}
+	commitConfig map[string]CommitConfig
 }
 
 func New(name string) (*Config, error) {
 	c := Config{
-		commitConfig: make(map[string]struct {
-			EnableScope     bool
-			EnableBody      bool
-			EnableFooter    bool
-			MessageTemplate string
-		}),
+		commitConfig: make(map[string]CommitConfig),
 	}
 
-	c.content.Commit.Types = []CommitType{
-		{Text: "feat", Note: "A new feature"},
-		{Text: "fix", Note: "A bug fix"},
-		{Text: "docs", Note: "Documentation only changes"},
-		{Text: "refactor", Note: "A code change that neither fixes a bug nor adds a feature"},
-		{Text: "test", Note: "Adding missing tests or correcting existing tests"},
-		{Text: "build", Note: "Changes that affect the build system or external dependencies"},
-		{Text: "ci", Note: "Changes to our CI configuration files and scripts"},
-		{Text: "perf", Note: "A code change that improves performance"},
-	}
-	c.content.Commit.EnableScope = "false"
-	c.content.Commit.EnableBody = "false"
-	c.content.Commit.EnableFooter = "false"
-	c.content.Commit.MessageTemplate = `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
+	c.content.Commit = CommitContent{
+		Types: []CommitType{
+			{Text: "feat", Note: "A new feature"},
+			{Text: "fix", Note: "A bug fix"},
+			{Text: "docs", Note: "Documentation only changes"},
+			{Text: "refactor", Note: "A code change that neither fixes a bug nor adds a feature"},
+			{Text: "test", Note: "Adding missing tests or correcting existing tests"},
+			{Text: "build", Note: "Changes that affect the build system or external dependencies"},
+			{Text: "ci", Note: "Changes to our CI configuration files and scripts"},
+			{Text: "perf", Note: "A code change that improves performance"},
+		},
+		EnableScope:  "false",
+		EnableBody:   "false",
+		EnableFooter: "false",
+		MessageTemplate: `{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{.Summary}}{{if .Body}}
 
 {{.Body}}{{end}}{{if .Footer}}
 
-{{.Footer}}{{end}}`
+{{.Footer}}{{end}}`,
+	}
 
 	var err error
 	if name != "" {
 		err = c.read(name)
 	}
 
-	c.commitConfig[""] = struct {
-		EnableScope     bool
-		EnableBody      bool
-		EnableFooter    bool
-		MessageTemplate string
-	}{
+	c.commitConfig[""] = CommitConfig{
+		Scopes:          c.content.Commit.Scopes,
 		EnableScope:     toBool(c.content.Commit.EnableScope),
 		EnableBody:      toBool(c.content.Commit.EnableBody),
 		EnableFooter:    toBool(c.content.Commit.EnableFooter),
@@ -80,12 +62,13 @@ func New(name string) (*Config, error) {
 			Note: typ.Note,
 		})
 
-		c.commitConfig[typ.Text] = struct {
-			EnableScope     bool
-			EnableBody      bool
-			EnableFooter    bool
-			MessageTemplate string
-		}{
+		c.commitConfig[typ.Text] = CommitConfig{
+			Scopes: func() []string {
+				if len(typ.Scopes) == 0 {
+					return c.commitConfig[""].Scopes
+				}
+				return typ.Scopes
+			}(),
 			EnableScope: func() bool {
 				if typ.EnableScope == "" {
 					return c.commitConfig[""].EnableScope

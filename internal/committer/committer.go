@@ -60,9 +60,9 @@ func (c Committer) scope() string {
 		return ""
 	}
 
-	scope, err := c.p.Ask("Input the scope of change: (skip if empty)").Input(
-		"",
-		input.WithHelp(true),
+	scope, err := c.p.Ask("Input the scope of change: (skip if empty)").Choose(
+		c.conf.CommitScopes(),
+		choose.WithTheme(choose.ThemeArrow),
 	)
 	checkErr(err)
 
