@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/cqroot/prompt v0.9.1-0.20230403072813-3386357d5323
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1
 )
 
