@@ -90,8 +90,8 @@ func TestRun_writesSummaryAndReinitializesModule(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
 		t.Fatalf("expected regenerated go.mod: %v", err)
 	}
-	if !strings.Contains(stdout.String(), "module github.com/cqroot/gear rebuilt in") {
-		t.Fatalf("expected summary on stdout, got %q", stdout.String())
+	if !strings.Contains(stdout.String(), "• gear remod: rebuilt github.com/cqroot/gear") {
+		t.Fatalf("expected success banner on stdout, got %q", stdout.String())
 	}
 	// The go tool must have produced output that flowed through to one
 	// of the two streams. We don't pin stdout vs stderr (go mixes
