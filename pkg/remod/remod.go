@@ -87,7 +87,7 @@ func ParseGoMod(root string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open go.mod: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -166,15 +166,15 @@ func Remod(root string, stdout, stderr io.Writer, module string) error {
 		return err
 	}
 
-	bannerColor.Fprint(stdout, stepIndent+"• ")
-	fmt.Fprintln(stdout, "gear remod: initialising module")
+	_, _ = bannerColor.Fprint(stdout, stepIndent+"• ")
+	_, _ = fmt.Fprintln(stdout, "gear remod: initialising module")
 
 	if err := RunGoMod(stdout, stderr, root, "init", module); err != nil {
 		return fmt.Errorf("go mod init failed: %w", err)
 	}
 
-	bannerColor.Fprint(stdout, stepIndent+"• ")
-	fmt.Fprintln(stdout, "gear remod: resolving dependencies")
+	_, _ = bannerColor.Fprint(stdout, stepIndent+"• ")
+	_, _ = fmt.Fprintln(stdout, "gear remod: resolving dependencies")
 
 	if err := RunGoMod(stdout, stderr, root, "tidy"); err != nil {
 		return fmt.Errorf("go mod tidy failed: %w", err)
@@ -208,14 +208,14 @@ func Run(root string, stdout, stderr io.Writer) error {
 		return fmt.Errorf("parse %s/go.mod: %w", root, err)
 	}
 
-	bannerColor.Fprintf(stdout, "• ")
-	fmt.Fprintf(stdout, "gear remod: rebuilding %s\n", module)
+	_, _ = bannerColor.Fprintf(stdout, "• ")
+	_, _ = fmt.Fprintf(stdout, "gear remod: rebuilding %s\n", module)
 
 	if err := Remod(root, stdout, stderr, module); err != nil {
 		return err
 	}
 
-	bannerColor.Fprintf(stdout, "• ")
-	fmt.Fprintf(stdout, "gear remod: rebuilt %s\n", module)
+	_, _ = bannerColor.Fprintf(stdout, "• ")
+	_, _ = fmt.Fprintf(stdout, "gear remod: rebuilt %s\n", module)
 	return nil
 }
