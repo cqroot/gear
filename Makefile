@@ -1,10 +1,10 @@
 .PHONY: test
 test:
-	go test -v -covermode=count -coverprofile=coverage.out ./...
+	go test -v -covermode count -coverprofile coverage.out ./...
 
 .PHONY: cover
 cover: test
-	go tool cover -html=coverage.out
+	go tool cover -html coverage.out
 
 .PHONY: fmt
 fmt:

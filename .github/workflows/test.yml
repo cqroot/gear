@@ -47,8 +47,11 @@ jobs:
       - name: Format check
         run: gofumpt -l .
 
+      # Use the space-separated form (not -coverprofile=coverage.out): under
+      # PowerShell on Windows the '=' form is mis-parsed and go receives a
+      # stray ".out" package argument (golang/go#51126).
       - name: Go test
-        run: go test -v -covermode=count -coverprofile=coverage.out ./...
+        run: go test -v -covermode count -coverprofile coverage.out ./...
 
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
