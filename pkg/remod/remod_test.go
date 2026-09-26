@@ -1,0 +1,128 @@
+package remod_test
+
+import (
+	"bytes"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/cqroot/gear/pkg/remod"
+)
+
+const sampleGoMod = `module github.com/cqroot/gear
+
+go 1.27.1
+
+require github.com/spf13/cobra v1.10.2
+`
+
+func writeFile(t *testing.T, dir, name, content string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+		t.Fatalf("write %s: %v", name, err)
+	}
+}
+
+func TestParseGoMod(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", sampleGoMod)
+
+	mod, err := remod.ParseGoMod(dir)
+	if err != nil {
+		t.Fatalf("ParseGoMod: %v", err)
+	}
+	if mod != "github.com/cqroot/gear" {
+		t.Fatalf("unexpected module path: %q", mod)
+	}
+}
+
+func TestParseGoMod_missing(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := remod.ParseGoMod(dir); err == nil {
+		t.Fatal("expected error for missing go.mod, got nil")
+	}
+}
+
+func TestParseGoMod_noModuleDirective(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", "// just a comment\n")
+	_, err := remod.ParseGoMod(dir)
+	if err == nil || !errors.Is(err, remod.ErrNoModule) {
+		t.Fatalf("expected ErrNoModule, got %v", err)
+	}
+}
+
+func TestRemoveFiles_idempotent(t *testing.T) {
+	dir := t.TempDir()
+	if err := remod.RemoveFiles(dir, "go.mod", "go.sum"); err != nil {
+		t.Fatalf("RemoveFiles: %v", err)
+	}
+
+	target := filepath.Join(dir, "go.mod")
+	writeFile(t, dir, "go.mod", sampleGoMod)
+	if err := remod.RemoveFiles(dir, "go.mod", "go.sum"); err != nil {
+		t.Fatalf("RemoveFiles: %v", err)
+	}
+	if _, err := os.Stat(target); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("expected go.mod removed: %v", err)
+	}
+}
+
+func TestRun_writesSummaryAndReinitializesModule(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", sampleGoMod)
+	writeFile(t, dir, "go.sum", "placeholder\n")
+	// A real .go file forces `go mod tidy` to actually resolve the
+	// declared dependency, which makes the go tool emit diagnostics on
+	// stdout ("go: finding module for ...", "go: found ...") so the
+	// test can assert that those bytes were forwarded through Run.
+	writeFile(t, dir, "main.go", "package main\n")
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	if err := remod.Run(dir, stdout, stderr); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	// go.mod must have been recreated.
+	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
+		t.Fatalf("expected regenerated go.mod: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "module github.com/cqroot/gear rebuilt in") {
+		t.Fatalf("expected summary on stdout, got %q", stdout.String())
+	}
+	// The go tool must have produced output that flowed through to one
+	// of the two streams. We don't pin stdout vs stderr (go mixes
+	// them), only that nothing was silently dropped.
+	combined := stdout.String() + stderr.String()
+	if !strings.Contains(combined, "go:") {
+		t.Fatalf("expected go tool output on stdout/stderr, got stdout=%q stderr=%q", stdout.String(), stderr.String())
+	}
+}
+
+func TestRun_missingModuleDirective(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", "// nothing here\n")
+
+	err := remod.Run(dir, nil, nil)
+	if err == nil || !errors.Is(err, remod.ErrNoModule) {
+		t.Fatalf("expected ErrNoModule, got %v", err)
+	}
+}
+
+// Regression test: an invalid module input must make Remod fail before
+// it deletes the existing go.mod / go.sum.
+func TestRemod_rejectsEmptyModuleWithoutTouchingFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", sampleGoMod)
+
+	if err := remod.Remod(dir, nil, nil, ""); err == nil {
+		t.Fatal("expected error for empty module, got nil")
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
+		t.Fatalf("existing go.mod was deleted: %v", err)
+	}
+}
