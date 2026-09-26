@@ -1,0 +1,22 @@
+# Build output
+/bin/
+/dist/
+
+# Test coverage
+/coverage.out
+
+# IDE / editors
+.idea/
+.vscode/
+.fleet/
+.history/
+*.iml
+*.code-workspace
+.vscode-test/
+*.swp
+*.swo
+*~
+
+# OS noise
+.DS_Store
+Thumbs.db
