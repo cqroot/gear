@@ -21,27 +21,34 @@ import (
 )
 
 func newRemodCmd() *cobra.Command {
+	var dir string
+
 	c := &cobra.Command{
 		Use:   "remod",
 		Short: "Rebuild go.mod and go.sum in place",
-		Long: `remod reconstructs the Go module files for the current directory.
+		Long: `remod reconstructs the Go module files for the target directory.
 
 It will:
-  1. Detect the project root (the working directory).
+  1. Resolve the project root (--dir, or the working directory).
   2. Read the existing go.mod to capture the declared module path.
   3. Delete the current go.mod and go.sum files.
   4. Re-run 'go mod init <module>' followed by 'go mod tidy'.
 
-The module path is preserved so existing import paths keep working.`,
+The module path is preserved so existing import paths keep working.
+If a step fails, the original go.mod and go.sum are restored.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return remod.Run(
-				"", // empty => use os.Getwd() inside pkg/remod
+				cmd.Context(),
+				dir, // empty => use os.Getwd() inside pkg/remod
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr(),
 			)
 		},
 		SilenceUsage: true,
 	}
+
+	c.Flags().StringVarP(&dir, "dir", "C", "", "run in this directory instead of the working directory")
+
 	return c
 }

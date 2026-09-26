@@ -16,6 +16,10 @@
 package cmd
 
 import (
+	"context"
+	"os"
+	"os/signal"
+
 	"github.com/cqroot/gear/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -28,11 +32,16 @@ func newRootCmd() *cobra.Command {
 	}
 	c.AddCommand(newRemodCmd())
 	c.Version = version.Get().String()
+	c.SetVersionTemplate("{{.Version}}\n")
 	return &c
 }
 
 func Execute() {
+	// Cancel the context on Ctrl+C so a running go command is terminated.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	c := newRootCmd()
-	err := c.Execute()
+	err := c.ExecuteContext(ctx)
 	cobra.CheckErr(err)
 }

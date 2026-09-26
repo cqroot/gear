@@ -55,7 +55,7 @@ func Get() Info {
 // String returns a formatted version info string.
 func (i Info) String() string {
 	var sb strings.Builder
-	sb.WriteString("\n  ")
+	sb.WriteString("  ")
 	sb.WriteString(labelColor.Sprint("• Version:      "))
 	sb.WriteString(i.Version)
 

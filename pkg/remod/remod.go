@@ -19,6 +19,7 @@ package remod
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -129,12 +130,53 @@ func RemoveFiles(root string, names ...string) error {
 	return nil
 }
 
+// moduleSnapshot holds the contents of the module files that Remod replaces,
+// so they can be put back if the rebuild fails.
+type moduleSnapshot struct {
+	root  string
+	names []string
+	files map[string][]byte
+}
+
+// snapshotModule reads the named files from root. Missing files are recorded
+// as absent so restore removes them instead of recreating them.
+func snapshotModule(root string, names ...string) (*moduleSnapshot, error) {
+	s := &moduleSnapshot{root: root, names: names, files: make(map[string][]byte, len(names))}
+	for _, name := range names {
+		data, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return nil, fmt.Errorf("read %s: %w", name, err)
+		}
+		s.files[name] = data
+	}
+	return s, nil
+}
+
+// restore removes whatever a failed rebuild left behind and writes the
+// snapshot back, leaving the original module files untouched.
+func (s *moduleSnapshot) restore() error {
+	for _, name := range s.names {
+		if err := os.Remove(filepath.Join(s.root, name)); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove %s: %w", name, err)
+		}
+	}
+	for name, data := range s.files {
+		if err := os.WriteFile(filepath.Join(s.root, name), data, 0o644); err != nil {
+			return fmt.Errorf("restore %s: %w", name, err)
+		}
+	}
+	return nil
+}
+
 // RunGoMod executes `go mod <args...>` inside root. The go command's
 // stdout and stderr are routed to stdout and stderr in real time, with
-// each line indented and rendered in gray.
+// each line indented and rendered in gray. ctx cancels the go process.
 //
 // Either writer may be nil; nil writers are treated as io.Discard.
-func RunGoMod(stdout, stderr io.Writer, root string, args ...string) error {
+func RunGoMod(ctx context.Context, stdout, stderr io.Writer, root string, args ...string) error {
 	if stdout == nil {
 		stdout = io.Discard
 	}
@@ -145,7 +187,7 @@ func RunGoMod(stdout, stderr io.Writer, root string, args ...string) error {
 	out := &colorWriter{dst: stdout, indent: goModIndent, style: goModColor}
 	errOut := &colorWriter{dst: stderr, indent: goModIndent, style: goModColor}
 
-	cmd := exec.Command("go", append([]string{"mod"}, args...)...)
+	cmd := exec.CommandContext(ctx, "go", append([]string{"mod"}, args...)...)
 	cmd.Dir = root
 	cmd.Stdout = out
 	cmd.Stderr = errOut
@@ -166,8 +208,9 @@ func RunGoMod(stdout, stderr io.Writer, root string, args ...string) error {
 
 // Remod rebuilds the Go module at root without going through ParseGoMod.
 // module must be non-empty; the function returns an error before touching
-// any files otherwise.
-func Remod(root string, stdout, stderr io.Writer, module string) error {
+// any files otherwise. If a step fails, the original go.mod and go.sum are
+// restored.
+func Remod(ctx context.Context, root string, stdout, stderr io.Writer, module string) error {
 	if root == "" {
 		return errors.New("remod: empty root directory")
 	}
@@ -177,22 +220,36 @@ func Remod(root string, stdout, stderr io.Writer, module string) error {
 		return errors.New("remod: module must be non-empty")
 	}
 
-	if err := RemoveFiles(root, "go.mod", "go.sum"); err != nil {
+	// Snapshot the current module files so a failed rebuild can restore
+	// them instead of leaving the project without a go.mod / go.sum.
+	snapshot, err := snapshotModule(root, "go.mod", "go.sum")
+	if err != nil {
 		return err
+	}
+	// restoreOnFailure rewinds the module files, keeping err's wrapping.
+	restoreOnFailure := func(err error) error {
+		if restoreErr := snapshot.restore(); restoreErr != nil {
+			return errors.Join(err, fmt.Errorf("restore module files: %w", restoreErr))
+		}
+		return err
+	}
+
+	if err := RemoveFiles(root, "go.mod", "go.sum"); err != nil {
+		return restoreOnFailure(err)
 	}
 
 	_, _ = bannerColor.Fprint(stdout, stepIndent+"• ")
 	_, _ = fmt.Fprintln(stdout, "gear remod: initialising module")
 
-	if err := RunGoMod(stdout, stderr, root, "init", module); err != nil {
-		return fmt.Errorf("go mod init failed: %w", err)
+	if err := RunGoMod(ctx, stdout, stderr, root, "init", module); err != nil {
+		return restoreOnFailure(fmt.Errorf("go mod init failed: %w", err))
 	}
 
 	_, _ = bannerColor.Fprint(stdout, stepIndent+"• ")
 	_, _ = fmt.Fprintln(stdout, "gear remod: resolving dependencies")
 
-	if err := RunGoMod(stdout, stderr, root, "tidy"); err != nil {
-		return fmt.Errorf("go mod tidy failed: %w", err)
+	if err := RunGoMod(ctx, stdout, stderr, root, "tidy"); err != nil {
+		return restoreOnFailure(fmt.Errorf("go mod tidy failed: %w", err))
 	}
 	return nil
 }
@@ -201,8 +258,9 @@ func Remod(root string, stdout, stderr io.Writer, module string) error {
 //
 // If root is empty, the current working directory is used. Either writer
 // may be nil; nil writers are treated as io.Discard. Errors are wrapped
-// so callers can match ErrNoModule with errors.Is.
-func Run(root string, stdout, stderr io.Writer) error {
+// so callers can match ErrNoModule with errors.Is. ctx cancels the
+// underlying go commands.
+func Run(ctx context.Context, root string, stdout, stderr io.Writer) error {
 	if stdout == nil {
 		stdout = io.Discard
 	}
@@ -226,7 +284,7 @@ func Run(root string, stdout, stderr io.Writer) error {
 	_, _ = bannerColor.Fprintf(stdout, "• ")
 	_, _ = fmt.Fprintf(stdout, "gear remod: rebuilding %s\n", module)
 
-	if err := Remod(root, stdout, stderr, module); err != nil {
+	if err := Remod(ctx, root, stdout, stderr, module); err != nil {
 		return err
 	}
 

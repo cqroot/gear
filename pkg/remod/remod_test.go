@@ -17,6 +17,7 @@ package remod_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -97,7 +98,7 @@ func TestRun_writesSummaryAndReinitializesModule(t *testing.T) {
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	if err := remod.Run(dir, stdout, stderr); err != nil {
+	if err := remod.Run(context.Background(), dir, stdout, stderr); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -121,7 +122,7 @@ func TestRun_missingModuleDirective(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "go.mod", "// nothing here\n")
 
-	err := remod.Run(dir, nil, nil)
+	err := remod.Run(context.Background(), dir, nil, nil)
 	if err == nil || !errors.Is(err, remod.ErrNoModule) {
 		t.Fatalf("expected ErrNoModule, got %v", err)
 	}
@@ -133,11 +134,40 @@ func TestRemod_rejectsEmptyModuleWithoutTouchingFiles(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "go.mod", sampleGoMod)
 
-	if err := remod.Remod(dir, nil, nil, ""); err == nil {
+	if err := remod.Remod(context.Background(), dir, nil, nil, ""); err == nil {
 		t.Fatal("expected error for empty module, got nil")
 	}
 
 	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
 		t.Fatalf("existing go.mod was deleted: %v", err)
+	}
+}
+
+// Regression test: a failed rebuild must restore the original go.mod / go.sum
+// instead of leaving the project without them.
+func TestRemod_restoresModuleFilesOnFailure(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", sampleGoMod)
+	writeFile(t, dir, "go.sum", "placeholder\n")
+
+	// An invalid module path makes `go mod init` fail after the original
+	// files have already been removed.
+	err := remod.Remod(context.Background(), dir, &bytes.Buffer{}, &bytes.Buffer{}, "not a valid module")
+	if err == nil {
+		t.Fatal("expected error for invalid module, got nil")
+	}
+
+	assertFileContent(t, filepath.Join(dir, "go.mod"), sampleGoMod)
+	assertFileContent(t, filepath.Join(dir, "go.sum"), "placeholder\n")
+}
+
+func assertFileContent(t *testing.T, path, want string) {
+	t.Helper()
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	if string(got) != want {
+		t.Fatalf("%s = %q, want %q", path, got, want)
 	}
 }
